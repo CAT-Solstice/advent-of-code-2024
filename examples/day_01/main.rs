@@ -5,6 +5,8 @@ pub fn main() {
   let input = include_str!( "day_01.input" );
   let answer = part_one::compute_answer( input );
   println!( "{answer}" );
+  let answer = part_two::compute_answer( input );
+  println!( "{answer}" );
 }
 
 fn parse_input( input: &str ) -> (Vec<LocationID>, Vec<LocationID>) {
@@ -50,6 +52,39 @@ mod part_one {
     #[test]
     fn test_compute_answer() {
       let expected = 11;
+      let actual = compute_answer( TEST_INPUT );
+      assert_eq!( actual, expected );
+    }
+  }
+}
+
+// =================================================================================================================================
+
+mod part_two {
+  use super::*;
+
+  pub(super) fn compute_answer( input: &str ) -> usize {
+    let (left, right) = parse_input( input );
+
+    let count = |id: &LocationID| {
+      right.iter()
+        .filter( |other| *other == id )
+        .count()
+    };
+
+    left.iter()
+      .map( |id| id.0 * count(id) )
+      .sum()
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::*;
+    use super::super::tests::TEST_INPUT;
+
+    #[test]
+    fn test_compute_answer() {
+      let expected = 31;
       let actual = compute_answer( TEST_INPUT );
       assert_eq!( actual, expected );
     }
