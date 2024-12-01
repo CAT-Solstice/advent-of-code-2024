@@ -10,8 +10,8 @@ pub fn main() {
 }
 
 fn parse_input( input: &str ) -> (Vec<LocationID>, Vec<LocationID>) {
-  input.split_terminator( '\n' )
-    .map( |line| line.split_ascii_whitespace() )
+  input.lines()
+    .map( |line| line.split_whitespace() )
     .map( |mut split| (split.next().unwrap(), split.next().unwrap()) )
     .map( |(left, right)| (left.parse::<usize>().unwrap(), right.parse::<usize>().unwrap()) )
     .map( |(left, right)| (LocationID(left), LocationID(right)) )
