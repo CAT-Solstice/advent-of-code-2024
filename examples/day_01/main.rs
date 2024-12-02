@@ -53,7 +53,7 @@ mod part_one {
     fn test_compute_answer() {
       let expected = 11;
       let actual = compute_answer( TEST_INPUT );
-      assert_eq!( actual, expected );
+      assert_eq!( expected, actual );
     }
   }
 }
@@ -86,7 +86,7 @@ mod part_two {
     fn test_compute_answer() {
       let expected = 31;
       let actual = compute_answer( TEST_INPUT );
-      assert_eq!( actual, expected );
+      assert_eq!( expected, actual );
     }
   }
 }
