@@ -10,3 +10,27 @@ pub fn read_file_lines<P>( path: P ) -> io::Result<impl Iterator<Item=io::Result
     .map( io::BufReader::new )
     .map( io::BufRead::lines )
 }
+
+use std::{sync::OnceLock, ops::Deref};
+
+pub struct Lazy<T> {
+  value: OnceLock<T>,
+  supplier: fn() -> T,
+}
+
+impl<T> Lazy<T> {
+  pub const fn from( supplier: fn() -> T ) -> Self {
+    Self {
+      value: OnceLock::new(),
+      supplier,
+    }
+  }
+}
+
+impl<T> Deref for Lazy<T> {
+  type Target = T;
+
+  fn deref( &self ) -> &Self::Target {
+    self.value.get_or_init( self.supplier )
+  }
+}
