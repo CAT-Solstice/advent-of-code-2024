@@ -4,6 +4,8 @@ pub fn main() {
   let input = include_str!( "day_05.input" );
   let answer = part_one::compute_answer( input );
   println!( "{answer}" );
+  let answer = part_two::compute_answer( input );
+  println!( "{answer}" );
 }
 
 struct RuleSet {
@@ -100,7 +102,45 @@ mod part_one {
 }
 
 mod part_two {
+  use super::*;
 
+  pub(super) fn compute_answer( input: &str ) -> usize {
+    let (rule_set, updates) = parse_input( input );
+    let mut ordering = rule_set.ordering();
+    let mut check_update = |mut update: &[usize]| -> bool {
+      while let Some((left, tail)) = update.split_first() {
+        for right in tail {
+          if ordering( left, right ) == cmp::Ordering::Greater {
+            return false;
+          }
+        }
+        update = tail;
+      }
+      true
+    };
+
+    let mut answer = 0;
+    for mut update in updates {
+      if !check_update( &update ) {
+        update.sort_by( rule_set.ordering() );
+        answer += update[ update.len()/2 ];
+      }
+    }
+    answer
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::*;
+    use super::super::tests::TEST_INPUT;
+
+    #[test]
+    fn test_compute_answer() {
+      let expected = 123;
+      let actual = compute_answer( TEST_INPUT );
+      assert_eq!( expected, actual );
+    }
+  }
 }
 
 #[cfg(test)]
