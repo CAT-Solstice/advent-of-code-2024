@@ -69,20 +69,12 @@ mod part_one {
   pub(super) fn compute_answer( input: &str ) -> usize {
     let (rule_set, updates) = parse_input( input );
     let mut ordering = rule_set.ordering();
-    let mut check_update = move |mut update: &[usize]| -> bool {
-      while let Some((left, tail)) = update.split_first() {
-        for right in tail {
-          if ordering( left, right ) == cmp::Ordering::Greater {
-            return false;
-          }
-        }
-        update = tail;
-      }
-      true
+    let mut compare = move |left: &usize, right: &usize| {
+      ordering( left, right ) != cmp::Ordering::Greater
     };
 
     updates.iter()
-      .filter( |update| check_update(update) )
+      .filter( |update| update.is_sorted_by( &mut compare ) )
       .map( |update| update[ update.len()/2 ] )
       .sum()
   }
@@ -107,21 +99,13 @@ mod part_two {
   pub(super) fn compute_answer( input: &str ) -> usize {
     let (rule_set, updates) = parse_input( input );
     let mut ordering = rule_set.ordering();
-    let mut check_update = |mut update: &[usize]| -> bool {
-      while let Some((left, tail)) = update.split_first() {
-        for right in tail {
-          if ordering( left, right ) == cmp::Ordering::Greater {
-            return false;
-          }
-        }
-        update = tail;
-      }
-      true
+    let mut compare = move |left: &usize, right: &usize| {
+      ordering( left, right ) != cmp::Ordering::Greater
     };
 
     let mut answer = 0;
     for mut update in updates {
-      if !check_update( &update ) {
+      if !update.is_sorted_by( &mut compare ) {
         update.sort_by( rule_set.ordering() );
         answer += update[ update.len()/2 ];
       }
