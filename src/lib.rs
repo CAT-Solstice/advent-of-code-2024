@@ -41,15 +41,14 @@ impl<T> Deref for Lazy<T> {
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 
+#[derive(Debug)]
 pub struct Mat2D<T> {
   data: Vec<Vec<T>>,
 }
 
-impl<T> Mat2D<T> {
-  pub fn from_iter_of_iter<II, III>( src: III ) -> Self
-  where II: IntoIterator<Item=T>,
-        III: IntoIterator<Item=II> {
-    let data = src.into_iter()
+impl<T, II> FromIterator<II> for Mat2D<T> where II: IntoIterator<Item=T> {
+  fn from_iter<III>( iter: III ) -> Self where III: IntoIterator<Item=II> {
+    let data = iter.into_iter()
       .map( |line| line.into_iter().collect() )
       .collect();
     Self { data }
@@ -82,12 +81,13 @@ ffffffff
 gggggggg
 hhhhhhhh";
 
-    let mat = Mat2D::from_iter_of_iter( data.lines().map( str::chars ) );
+    let mat = data.lines()
+      .map( str::chars )
+      .collect::<Mat2D<_>>();
 
     assert_eq!( Some(&'a'), mat.get((0,0)) );
     assert_eq!( Some(&'a'), mat.get((0,7)) );
     assert_eq!( Some(&'h'), mat.get((7,0)) );
     assert_eq!( Some(&'h'), mat.get((7,7)) );
   }
-
 }
