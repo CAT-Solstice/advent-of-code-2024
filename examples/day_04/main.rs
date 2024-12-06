@@ -9,9 +9,7 @@ pub fn main() {
 }
 
 fn parse_input( input: &str ) -> Mat2D<char> {
-  Mat2D::from_iter_of_iter(
-     input.lines().map( str::chars )
-  )
+    input.lines().map( str::chars ).collect()
 }
 
 mod part_one {
