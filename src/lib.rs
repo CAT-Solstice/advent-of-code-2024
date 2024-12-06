@@ -60,7 +60,17 @@ impl<T> Mat2D<T> {
     self.data.get( row )
       .and_then( |row| row.get(col) )
   }
+
+  pub fn iter( &self ) -> impl Iterator<Item=((usize,usize), &T)> {
+    self.data.iter().enumerate()
+      .flat_map( |(row_idx, row)|
+        row.iter().enumerate()
+          .map( move |(col_idx, value)|
+            ((row_idx,col_idx), value)
+      ))
+  }
 }
+
 
 // =================================================================================================================================
 
