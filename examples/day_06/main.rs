@@ -43,7 +43,9 @@ impl Position for (usize, usize) {
 // ---------------------------------------------------------------------------------------------------------------------------------
 
 pub fn main() {
-  todo!()
+  let input = include_str!( "day_06.input" );
+  let answer = part_one::compute_answer( input );
+  println!( "{answer}" );
 }
 
 fn parse_input( input: &str ) -> Mat2D<char> {
@@ -57,11 +59,59 @@ fn find_start( mat: &Mat2D<char> ) -> Option<(usize, usize)> {
     )
 }
 
+mod part_one {
+  use super::*;
+  use std::collections::HashSet;
+
+  pub(super) fn compute_answer( input: &str ) -> usize {
+    let mat = parse_input( input );
+    let start = find_start( &mat )
+      .expect( "should find a start position" );
+    patrol( &mat, start, Direction::North )
+}
+
+  fn patrol( mat: &Mat2D<char>, mut position: (usize,usize), mut direction: Direction ) -> usize {
+    let go_next = |position: (usize,usize), direction: Direction| {
+      let position = position.go( direction )?;
+      let cell = mat.get( position )?;
+      Some((position, cell))
+    };
+
+    let mut visited = HashSet::new();
+    visited.insert( position );
+
+    while let Some(( next, cell )) = go_next( position, direction ) {
+      match *cell {
+        '#' => direction = direction.turn_right(),
+        _ => {
+          position = next;
+          visited.insert( position );
+        },
+      }
+    }
+
+    visited.len()
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::*;
+    use super::super::tests::TEST_INPUT;
+
+    #[test]
+    fn test_compute_answer() {
+      let expected = 41;
+      let actual = compute_answer( TEST_INPUT );
+      assert_eq!( expected, actual );
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
 
-  const TEST_INPUT: &str = "....#.....
+  pub(super) const TEST_INPUT: &str = "....#.....
 .........#
 ..........
 ..#.......
