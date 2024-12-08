@@ -46,6 +46,8 @@ pub fn main() {
   let input = include_str!( "day_06.input" );
   let answer = part_one::compute_answer( input );
   println!( "{answer}" );
+  let answer = part_two::compute_answer( input );
+  println!( "{answer}" );
 }
 
 fn parse_input( input: &str ) -> Mat2D<char> {
@@ -101,6 +103,103 @@ mod part_one {
     #[test]
     fn test_compute_answer() {
       let expected = 41;
+      let actual = compute_answer( TEST_INPUT );
+      assert_eq!( expected, actual );
+    }
+  }
+}
+
+mod part_two {
+  use std::collections::{HashMap, HashSet};
+  use super::*;
+
+  pub(super) fn compute_answer( input: &str ) -> usize {
+    let mat = parse_input( input );
+    let start = find_start( &mat )
+      .expect( "should find a start position" );
+    patrol( &mat, start, Direction::North )
+  }
+
+  fn is_loop( mat: &Mat2D<char>,
+              mut position: (usize,usize),
+              mut direction: Direction,
+              obstruction: (usize,usize) ) -> bool {
+    let go_next = move |position: (usize,usize), direction: Direction| {
+      let position = position.go( direction )?;
+      let mut cell = mat.get( position )?;
+      if position == obstruction {
+        cell = &'#';
+      }
+      Some((position, cell))
+    };
+
+    let mut visited = HashMap::<(usize,usize), Vec<Direction>>::new();
+    while let Some(( next, cell )) = go_next( position, direction ) {
+      visited.entry( position )
+        .and_modify( |directions| directions.push(direction) )
+        .or_insert_with( || vec!(direction) );
+
+      match *cell {
+        '#' => direction = direction.turn_right(),
+        _ => position = next,
+      }
+
+      let already_visited = visited.get( &position )
+        .map( |directions| directions.contains(&direction) )
+        .unwrap_or( false );
+      if already_visited {
+        return true;
+      }
+    }
+
+    false
+  }
+
+  fn patrol( mat: &Mat2D<char>,
+             start: (usize,usize),
+             mut direction: Direction ) -> usize {
+    let go_next = |position: (usize,usize), direction: Direction| {
+      let position = position.go( direction )?;
+      let cell = mat.get( position )?;
+      Some((position, cell))
+    };
+
+    let mut position = start;
+    let mut solutions = HashSet::new();
+    while let Some(( next, cell )) = go_next( position, direction ) {
+      if *cell == '#' {
+        direction = direction.turn_right();
+      }
+      else {
+        // if is_loop( mat, position, direction, next ) { // this is wrong, current position may not be accessible with this obstruction
+        if is_loop( mat, start, Direction::North, next ) { // this is right
+          solutions.insert( next );
+        }
+        position = next;
+      }
+    }
+
+    solutions.remove( &start );
+    solutions.len()
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::*;
+    use super::super::tests::TEST_INPUT;
+
+    #[test]
+    fn test_is_loop() {
+      let mat = parse_input( TEST_INPUT );
+      let start = find_start( &mat )
+        .expect( "should find a start position" );
+      let actual = is_loop( &mat, start, Direction::North, (6,3) );
+      assert!( actual );
+    }
+
+    #[test]
+    fn test_compute_answer() {
+      let expected = 6;
       let actual = compute_answer( TEST_INPUT );
       assert_eq!( expected, actual );
     }
