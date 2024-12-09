@@ -5,6 +5,8 @@ pub fn main() {
   let input = include_str!( "day_08.input" );
   let answer = part_one::compute_answer::<50, 50>( input );
   println!( "{answer}" );
+  let answer = part_two::compute_answer::<50, 50>( input );
+  println!( "{answer}" );
 }
 
 fn parse_input( input: &str ) -> HashMap<char, Vec<(usize,usize)>> {
@@ -73,7 +75,61 @@ mod part_one {
 }
 
 mod part_two {
+  use std::{collections::HashSet, iter};
+  use super::*;
 
+  pub(super) fn compute_answer<const ROWS: usize, const COLS: usize>( input: &str ) -> usize {
+    let antinodes = |one: (usize,usize), other: (usize,usize)| {
+      get_antinodes::<ROWS,COLS>( one, other )
+    };
+
+    let antinodes = parse_input( input )
+      .into_values()
+      .flat_map( |positions| positions.into_iter()
+        .tuple_combinations()
+        .flat_map( |(one, other)| antinodes( one, other )))
+      .collect::<HashSet<_>>();
+     antinodes.len()
+  }
+
+  fn get_antinodes<const ROWS: usize, const COLS: usize>( one: (usize,usize), other: (usize,usize) ) -> impl Iterator<Item=(usize,usize)> {
+    let inner = |first: (usize,usize), second: (usize,usize)| {
+      let rows = second.0 as isize - first.0 as isize;
+      let cols = second.1 as isize - first.1 as isize;
+      iter::successors(
+        Some( first ),
+        move |(row, col)| match (row.checked_add_signed(rows)?, col.checked_add_signed(cols)?) {
+          (row, col) if row < ROWS && col < COLS => Some((row, col)),
+          _ => None,
+      })
+    };
+
+    let first = inner( one, other );
+    let second = inner( other, one );
+    first.chain( second )
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::*;
+    use super::super::tests::TEST_INPUT;
+
+    #[test]
+    fn test_get_antinodes() {
+      let one = (0, 0);
+      let other = (2, 1);
+      let expected = HashSet::from_iter( [(0, 0), (2, 1), (4, 2), (6, 3), (8, 4)] );
+      let actual = get_antinodes::<10, 10>( one, other ).collect::<HashSet<_>>();
+      assert_eq!( expected, actual );
+    }
+
+    #[test]
+    fn test_compute_answer() {
+      let expected = 34;
+      let actual = compute_answer::<12, 12>( TEST_INPUT );
+      assert_eq!( expected, actual );
+    }
+  }
 }
 
 #[cfg(test)]
