@@ -32,6 +32,8 @@ pub fn main() {
   let input = include_str!( "day_07.input" );
   let answer = part_one::compute_answer( input );
   println!( "{answer}" );
+  let answer = part_two::compute_answer( input );
+  println!( "{answer}" );
 }
 
 fn parse_input( input: &str ) -> Vec<Equation> {
@@ -109,7 +111,69 @@ mod part_one {
 // ---------------------------------------------------------------------------------------------------------------------------------
 
 mod part_two {
+  use itertools::{self, Itertools};
+  use super::*;
 
+  #[derive(Debug, Clone, Copy)]
+  enum Operator {
+    Add,
+    Mul,
+    Concat,
+  }
+
+  const OPERATORS: &[Operator; 3] = &[
+    Operator::Add,
+    Operator::Mul,
+    Operator::Concat,
+  ];
+
+  pub(super) fn compute_answer( input: &str ) -> isize {
+    parse_input( input ).into_iter()
+      .filter( try_solve )
+      .map( |equation| equation.result )
+      .sum()
+  }
+
+  fn try_solve( equation: &Equation ) -> bool {
+    let operators_permutations = itertools::repeat_n( OPERATORS, equation.values.len()-1 )
+      .multi_cartesian_product();
+    for operators in operators_permutations {
+      let mut values = equation.values.iter();
+      let mut result = *values.next().unwrap();
+      for (operand, operator) in std::iter::zip( values, operators ) {
+        match operator {
+          Operator::Add => result += operand,
+          Operator::Mul => result *= operand,
+          Operator::Concat => result = result * 10isize.pow(operand.ilog10()+1) + operand,
+        }
+      }
+      if result == equation.result {
+        return true;
+      }
+    }
+
+    false
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::*;
+    use super::super::tests::TEST_INPUT;
+
+    #[test]
+    fn test_try_solve() {
+      let equation = Equation{ result: 7290, values: vec![6,8,6,15] };
+      let success = try_solve( &equation );
+      assert!( success );
+    }
+
+    #[test]
+    fn test_compute_answer() {
+      let expected = 11387;
+      let actual = compute_answer( TEST_INPUT );
+      assert_eq!( expected, actual );
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
