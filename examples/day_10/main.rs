@@ -48,6 +48,8 @@ pub fn main() {
   let input = include_str!( "day_10.input" );
   let answer = part_one::compute_answer( input );
   println!( "{answer}" );
+  let answer = part_two::compute_answer( input );
+  println!( "{answer}" );
 }
 
 fn parse_input( input: &str ) -> (Grid, Map) {
@@ -68,19 +70,6 @@ fn neighbours( mat: &Mat2D<u8>, position: (usize,usize) ) -> Vec<(usize, usize)>
     .filter_map( |position| mat.get( position )
       .and_then( |height| (*height == next_height).then_some(position) ))
     .collect()
-}
-
-fn is_trail( start: &(usize,usize), end: &(usize,usize), map: &Map ) -> bool {
-  fn inner( current: &(usize,usize), end: &(usize,usize), map: &Map ) -> bool {
-    if current.eq( end ) { return true; }
-    for neighbour in &map[ current ] {
-      if inner( neighbour, end, map ) {
-        return true;
-      }
-    }
-    false
-  }
-  inner( start, end, map )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -104,6 +93,70 @@ mod part_one {
       .count()
   }
 
+  fn is_trail( start: &(usize,usize), end: &(usize,usize), map: &Map ) -> bool {
+    fn inner( current: &(usize,usize), end: &(usize,usize), map: &Map ) -> bool {
+      if current.eq( end ) { return true; }
+      for neighbour in &map[ current ] {
+        if inner( neighbour, end, map ) {
+          return true;
+        }
+      }
+      false
+    }
+    inner( start, end, map )
+  }
+
+  #[cfg(test)]
+  mod tests {
+    use super::*;
+    use super::super::tests::{TEST_INPUT_1, TEST_INPUT_2};
+
+    #[test]
+    fn test_is_trail() {
+      let (_, map) = parse_input( TEST_INPUT_1 );
+      assert!(is_trail( &(0, 0), &(3, 0), &map ));
+    }
+
+    #[test]
+    fn test_compute_answer() {
+      let expected = 36;
+      let actual = compute_answer( TEST_INPUT_2 );
+      assert_eq!( expected, actual );
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+
+mod part_two {
+  use super::*;
+
+  pub(super) fn compute_answer( input: &str ) -> usize {
+    let (mat, map) = parse_input( input );
+    let starts = mat.iter()
+      .filter_map( |(position, height)| (*height == 0).then_some(position) );
+    let ends = mat.iter()
+      .filter_map( |(position, height)| (*height == 9).then_some(position) )
+      .collect::<Vec<_>>();
+    let count_trails = |start: &(usize,usize), end: &(usize,usize)| {
+      count_trails( start, end, &map )
+    };
+    starts
+      .flat_map( |start| ends.iter()
+        .map( move |end| count_trails( &start, end) ) )
+      .sum()
+  }
+
+  fn count_trails( start: &(usize,usize), end: &(usize,usize), map: &Map ) -> usize {
+    fn inner( current: &(usize,usize), end: &(usize,usize), map: &Map ) -> usize {
+      if current.eq( end ) { return 1; }
+      map[ current ].iter()
+        .map( |neighbour| inner( neighbour, end, map ) )
+        .sum()
+    }
+    inner( start, end, map )
+  }
+
   #[cfg(test)]
   mod tests {
     use super::*;
@@ -111,7 +164,7 @@ mod part_one {
 
     #[test]
     fn test_compute_answer() {
-      let expected = 36;
+      let expected = 81;
       let actual = compute_answer( TEST_INPUT_2 );
       assert_eq!( expected, actual );
     }
@@ -143,11 +196,5 @@ mod tests {
     let (_, map) = parse_input( TEST_INPUT_1 );
     assert_eq!( &[(0,1), (1,0)][..], map[&(0,0)] );
     assert_eq!( &[(3,2), (2,1)][..], map[&(2,2)] );
-  }
-
-  #[test]
-  fn test_is_trail() {
-    let (_, map) = parse_input( TEST_INPUT_1 );
-    assert!(is_trail( &(0, 0), &(3, 0), &map ));
   }
 }
