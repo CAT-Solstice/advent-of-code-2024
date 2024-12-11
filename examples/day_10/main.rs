@@ -76,6 +76,7 @@ fn neighbours( mat: &Mat2D<u8>, position: (usize,usize) ) -> Vec<(usize, usize)>
 
 mod part_one {
   use super::*;
+  use itertools::Itertools;
 
   pub(super) fn compute_answer( input: &str ) -> usize {
     let (mat, map) = parse_input( input );
@@ -84,18 +85,15 @@ mod part_one {
     let ends = mat.iter()
       .filter_map( |(position, height)| (*height == 9).then_some(position) )
       .collect::<Vec<_>>();
-    let is_trail = |start: &(usize,usize), end: &(usize,usize)| {
-      is_trail( start, end, &map )
-    };
-    starts
-      .flat_map( |start| ends.iter()
-        .filter_map( move |end| is_trail( &start, end ).then_some(( start, end )) ))
+
+    starts.cartesian_product( ends )
+      .filter( |(start, end)| is_trail( start, end, &map ) )
       .count()
   }
 
   fn is_trail( start: &(usize,usize), end: &(usize,usize), map: &Map ) -> bool {
     fn inner( current: &(usize,usize), end: &(usize,usize), map: &Map ) -> bool {
-      if current.eq( end ) { return true; }
+      if current == end { return true; }
       for neighbour in &map[ current ] {
         if inner( neighbour, end, map ) {
           return true;
@@ -130,6 +128,7 @@ mod part_one {
 
 mod part_two {
   use super::*;
+  use itertools::Itertools;
 
   pub(super) fn compute_answer( input: &str ) -> usize {
     let (mat, map) = parse_input( input );
@@ -138,18 +137,15 @@ mod part_two {
     let ends = mat.iter()
       .filter_map( |(position, height)| (*height == 9).then_some(position) )
       .collect::<Vec<_>>();
-    let count_trails = |start: &(usize,usize), end: &(usize,usize)| {
-      count_trails( start, end, &map )
-    };
-    starts
-      .flat_map( |start| ends.iter()
-        .map( move |end| count_trails( &start, end) ) )
+
+    starts.cartesian_product( ends )
+      .map( |(start, end)| count_trails( &start, &end, &map ) )
       .sum()
   }
 
   fn count_trails( start: &(usize,usize), end: &(usize,usize), map: &Map ) -> usize {
     fn inner( current: &(usize,usize), end: &(usize,usize), map: &Map ) -> usize {
-      if current.eq( end ) { return 1; }
+      if current == end { return 1; }
       map[ current ].iter()
         .map( |neighbour| inner( neighbour, end, map ) )
         .sum()
