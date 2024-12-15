@@ -2,6 +2,8 @@ pub fn main() {
   let input = include_str!( "day_11.input" );
   let answer = part_one::compute_answer( input );
   println!( "{answer}" );
+  let answer = part_two::compute_answer( input );
+  println!( "{answer}" );
 }
 
 fn parse_input( input: &str ) -> Vec<usize> {
@@ -76,6 +78,52 @@ mod part_one {
       let actual = compute_answer( TEST_INPUT );
       assert_eq!( expected, actual );
     }
+  }
+}
+
+mod part_two {
+  use std::collections::HashMap;
+  use itertools::Either;
+  use super::*;
+
+  const MAX_DEPTH: usize = 75;
+  type Cache = HashMap<(usize,usize), usize>;
+
+  pub(super) fn compute_answer( input: &str ) -> usize {
+    fn inner( stone: usize, depth: usize, cache: &mut Cache ) -> usize {
+      if depth == MAX_DEPTH { return 1; }
+      if let Some( count ) = cache.get( &(stone, MAX_DEPTH-depth) ) { return *count; }
+      let count = match blink( stone ) {
+        Either::Left( stone ) => inner( stone, depth+1, cache ),
+        Either::Right( [left, right] ) => inner( left, depth+1, cache ) + inner( right, depth+1, cache ),
+      };
+      cache.insert( (stone, MAX_DEPTH-depth), count );
+      count
+    }
+
+    let mut cache = Cache::new();
+    let stones = parse_input( input );
+    let now = std::time::Instant::now();
+    let count = stones.into_iter()
+      .map( |stone| inner( stone, 0, &mut cache ) )
+      .sum();
+    println!( "total: {count} in {}ms", now.elapsed().as_millis() );
+    println!( "cache size: {}", cache.len() );
+    count
+  }
+
+  fn blink( stone: usize ) -> Either<usize, [usize; 2]> {
+    if stone == 0 {
+      return Either::Left( 1_usize );
+    }
+    let num_digits = stone.ilog10() + 1;
+    if num_digits % 2 == 0 {
+      let split_at = 10_usize.pow( num_digits / 2 );
+      let left = stone / split_at;
+      let right = stone - left*split_at;
+      return Either::Right( [left, right] );
+    }
+    Either::Left( stone * 2024 )
   }
 }
 
